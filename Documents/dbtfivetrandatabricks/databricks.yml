@@ -1,0 +1,48 @@
+bundle:
+  name: dbt_fivetran_databricks
+
+include:
+  - resources/*.yml
+
+sync:
+  include:
+    - notebooks/
+    - dbt_project/
+
+artifacts:
+  default:
+    path: ./notebooks
+    files:
+      - source: ./notebooks/dbt_run.py
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://adb-984752964297111.11.azuredatabricks.net
+
+  prod:
+    mode: production
+    workspace:
+      host: https://adb-984752964297111.11.azuredatabricks.net
+      root_path: /Workspace/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      service_principal_name: ${var.service_principal_name}
+
+variables:
+  catalog:
+    description: Unity Catalog name
+    default: marion_test
+
+  schema:
+    description: Schema/database name for dbt models
+    default: dbt_analytics
+
+  sql_warehouse_id:
+    description: SQL Warehouse ID for dbt operations
+    default: "148ccb90800933a1"
+
+  service_principal_name:
+    description: Service principal for production deployments
+    default: ""

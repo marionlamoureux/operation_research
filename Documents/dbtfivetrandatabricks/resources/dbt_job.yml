@@ -1,0 +1,41 @@
+resources:
+  jobs:
+    dbt_daily_run:
+      name: dbt_daily_run_${bundle.target}
+
+      tasks:
+        - task_key: dbt_deps
+          job_cluster_key: dbt_cluster
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/dbt_run
+            base_parameters:
+              dbt_command: "deps"
+              warehouse_id: ${var.sql_warehouse_id}
+
+        - task_key: dbt_run
+          depends_on:
+            - task_key: dbt_deps
+          job_cluster_key: dbt_cluster
+          notebook_task:
+            notebook_path: ${workspace.file_path}/notebooks/dbt_run
+            base_parameters:
+              dbt_command: "run"
+              warehouse_id: ${var.sql_warehouse_id}
+
+      job_clusters:
+        - job_cluster_key: dbt_cluster
+          new_cluster:
+            spark_version: "14.3.x-scala2.12"
+            node_type_id: "Standard_D4s_v3"
+            num_workers: 2
+            data_security_mode: USER_ISOLATION
+            custom_tags:
+              project: "dbt_fivetran"
+
+      schedule:
+        quartz_cron_expression: "0 0 2 * * ?"
+        timezone_id: "UTC"
+        pause_status: PAUSED
+
+      max_concurrent_runs: 1
+      timeout_seconds: 7200

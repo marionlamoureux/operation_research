@@ -1,0 +1,53 @@
+version: 2
+
+sources:
+  - name: sap
+    description: ERP procurement data ingested via Fivetran
+    database: marion_test
+    schema: bronze
+    tables:
+      - name: sap_procurement_orders
+        description: Raw procurement orders from SAP
+        columns:
+          - name: order_id
+            description: Unique order identifier
+          - name: supplier_id
+            description: Supplier identifier
+          - name: material_type
+            description: Type of material ordered
+          - name: volume_kg
+            description: Volume in kilograms
+          - name: order_date
+            description: Date of order placement
+
+  - name: dynamics365
+    description: ESG and supplier audit data from Dynamics 365
+    database: marion_test
+    schema: bronze
+    tables:
+      - name: esg_supplier_audits
+        description: Supplier audit results and certifications
+        columns:
+          - name: supplier_id
+            description: Supplier identifier
+          - name: audit_year
+            description: Year of audit
+          - name: audit_status
+            description: Audit result status
+          - name: certification
+            description: Certification obtained
+
+  - name: esg
+    description: ESG emissions data from Excel/SharePoint
+    database: marion_test
+    schema: bronze
+    tables:
+      - name: esg_emissions
+        description: Emissions data by year and scope
+        columns:
+          - name: year
+            description: Reporting year
+          - name: scope
+            description: Emissions scope (1, 2, or 3)
+          - name: emissions_tco2
+            description: Emissions in tonnes CO2 equivalent

@@ -5,9 +5,10 @@ from models import (
     FaunaDetection, FloraDetection, HydroMetric, CarbonCapture, AlertLevel
 )
 
-# Forest bounding box — 9 hectares in Normandy, France
-LAT_MIN, LAT_MAX = 48.6350, 48.6390
-LNG_MIN, LNG_MAX = -1.5120, -1.5060
+# Forest bounding box — 9 hectares in Bourgogne-Franche-Comte, France
+# Center: 47°15'54.5"N 5°35'15.1"E
+LAT_MIN, LAT_MAX = 47.2635, 47.2668
+LNG_MIN, LNG_MAX = 5.5855, 5.5895
 
 FAUNA_SPECIES = [
     ("Sus scrofa", "Sanglier"),

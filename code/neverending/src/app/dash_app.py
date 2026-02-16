@@ -36,8 +36,8 @@ COLORS = {
     "dark": "#1B4332",
 }
 
-# Forest center coordinates
-FOREST_CENTER = {"lat": 48.6370, "lon": -1.5090}
+# Forest center coordinates — 47°15'54.5"N 5°35'15.1"E
+FOREST_CENTER = {"lat": 47.265139, "lon": 5.587528}
 
 
 # ── Components ─────────────────────────────────────────────
@@ -73,8 +73,11 @@ def create_navbar():
             ], align="center", className="g-0"),
             dbc.Nav([
                 dbc.NavItem(dbc.NavLink(
-                    [html.I(className="fas fa-paw me-1"), "Fauna"],
+                    [html.I(className="fas fa-home me-1"), "Home"],
                     href="/", active="exact")),
+                dbc.NavItem(dbc.NavLink(
+                    [html.I(className="fas fa-paw me-1"), "Fauna"],
+                    href="/fauna", active="exact")),
                 dbc.NavItem(dbc.NavLink(
                     [html.I(className="fas fa-leaf me-1"), "Flora"],
                     href="/flora", active="exact")),
@@ -90,6 +93,128 @@ def create_navbar():
         dark=True,
         className="mb-4",
     )
+
+
+# ══════════════════════════════════════════════════════════
+# HOME — SATELLITE VIEW
+# ══════════════════════════════════════════════════════════
+
+def home_layout():
+    fig = go.Figure(go.Scattermapbox(
+        lat=[FOREST_CENTER["lat"]],
+        lon=[FOREST_CENTER["lon"]],
+        mode="markers+text",
+        marker=dict(size=16, color=COLORS["forest"], symbol="circle"),
+        text=["Neverending Forest"],
+        textposition="top center",
+        textfont=dict(size=14, color=COLORS["dark"]),
+    ))
+    fig.update_layout(
+        mapbox=dict(
+            style="white-bg",
+            layers=[{
+                "below": "traces",
+                "sourcetype": "raster",
+                "sourceattribution": "Esri, Maxar, Earthstar Geographics",
+                "source": [
+                    "https://server.arcgisonline.com/ArcGIS/rest/services/"
+                    "World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                ],
+            }],
+            center=dict(lat=FOREST_CENTER["lat"], lon=FOREST_CENTER["lon"]),
+            zoom=15,
+            pitch=45,
+        ),
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=600,
+    )
+
+    return dbc.Container([
+        dbc.Row([
+            dbc.Col([
+                html.Div([
+                    html.H2("Neverending Forest", className="fw-bold mb-1",
+                             style={"color": COLORS["dark"]}),
+                    html.P("9-hectare forest environmental monitoring station",
+                           className="text-muted mb-0",
+                           style={"fontSize": "1.1rem"}),
+                    html.P([
+                        html.I(className="fas fa-map-marker-alt me-2"),
+                        "47\u00b015'54.5\"N  5\u00b035'15.1\"E  \u2014  Bourgogne-Franche-Comt\u00e9, France",
+                    ], className="text-muted", style={"fontSize": "0.9rem"}),
+                ], className="mb-3"),
+            ]),
+        ]),
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody(dcc.Graph(id="home-satellite", figure=fig),
+                                 className="p-0"),
+                ], className="shadow-sm", style={"borderRadius": "12px",
+                                                   "overflow": "hidden"}),
+            ]),
+        ], className="mb-4"),
+        dbc.Row([
+            dbc.Col(stat_card("Area", "9 ha", "fa-expand-arrows-alt", "forest"), md=3),
+            dbc.Col(stat_card("Data Sources", "8", "fa-database", "water"), md=3),
+            dbc.Col(stat_card("Sensors", "6 cameras + 3 hydro", "fa-broadcast-tower", "leaf"), md=3),
+            dbc.Col(stat_card("Monitoring Since", "2024", "fa-calendar-alt", "earth"), md=3),
+        ]),
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardBody([
+                        html.H5("Data Sources", className="mb-3",
+                                 style={"color": COLORS["dark"]}),
+                        dbc.Row([
+                            dbc.Col(html.Div([
+                                html.I(className="fas fa-camera fa-lg mb-2",
+                                       style={"color": COLORS["forest"]}),
+                                html.P("Trail Cameras", className="fw-bold mb-0",
+                                       style={"fontSize": "0.85rem"}),
+                                html.Small("Fauna detection", className="text-muted"),
+                            ], className="text-center"), md=2),
+                            dbc.Col(html.Div([
+                                html.I(className="fas fa-satellite fa-lg mb-2",
+                                       style={"color": COLORS["water"]}),
+                                html.P("Satellite", className="fw-bold mb-0",
+                                       style={"fontSize": "0.85rem"}),
+                                html.Small("Canopy analysis", className="text-muted"),
+                            ], className="text-center"), md=2),
+                            dbc.Col(html.Div([
+                                html.I(className="fas fa-helicopter fa-lg mb-2",
+                                       style={"color": COLORS["leaf"]}),
+                                html.P("Drone", className="fw-bold mb-0",
+                                       style={"fontSize": "0.85rem"}),
+                                html.Small("Aerial imagery", className="text-muted"),
+                            ], className="text-center"), md=2),
+                            dbc.Col(html.Div([
+                                html.I(className="fas fa-water fa-lg mb-2",
+                                       style={"color": COLORS["water"]}),
+                                html.P("Hydro Sensors", className="fw-bold mb-0",
+                                       style={"fontSize": "0.85rem"}),
+                                html.Small("Water monitoring", className="text-muted"),
+                            ], className="text-center"), md=2),
+                            dbc.Col(html.Div([
+                                html.I(className="fas fa-microphone fa-lg mb-2",
+                                       style={"color": COLORS["warm"]}),
+                                html.P("Audio", className="fw-bold mb-0",
+                                       style={"fontSize": "0.85rem"}),
+                                html.Small("Bioacoustics", className="text-muted"),
+                            ], className="text-center"), md=2),
+                            dbc.Col(html.Div([
+                                html.I(className="fas fa-cubes fa-lg mb-2",
+                                       style={"color": COLORS["earth"]}),
+                                html.P("LIDAR", className="fw-bold mb-0",
+                                       style={"fontSize": "0.85rem"}),
+                                html.Small("3D structure", className="text-muted"),
+                            ], className="text-center"), md=2),
+                        ]),
+                    ]),
+                ], className="shadow-sm"),
+            ]),
+        ]),
+    ], fluid=True)
 
 
 # ══════════════════════════════════════════════════════════
@@ -607,13 +732,15 @@ app.layout = html.Div([
     Input("url", "pathname"),
 )
 def display_page(pathname):
-    if pathname == "/flora":
+    if pathname == "/fauna":
+        return fauna_layout()
+    elif pathname == "/flora":
         return flora_layout()
     elif pathname == "/hydro":
         return hydro_layout()
     elif pathname == "/carbon":
         return carbon_layout()
-    return fauna_layout()
+    return home_layout()
 
 
 if __name__ == "__main__":

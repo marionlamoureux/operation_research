@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "databricks": {
+      "command": "/Users/marion.lamoureux/.ai-dev-kit/.venv/bin/python",
+      "args": ["/Users/marion.lamoureux/.ai-dev-kit/repo/databricks-mcp-server/run_server.py"],
+      "env": {"DATABRICKS_CONFIG_PROFILE": "DEFAULT"}
+    }
+  }
+}

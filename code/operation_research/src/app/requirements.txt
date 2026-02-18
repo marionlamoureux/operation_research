@@ -1,0 +1,9 @@
+streamlit>=1.40.0
+ortools>=9.10
+sqlalchemy>=2.0
+psycopg[binary]>=3.0
+alembic>=1.13.0
+databricks-sdk>=0.81.0
+pydantic>=2.0
+plotly>=5.0
+pandas>=2.0

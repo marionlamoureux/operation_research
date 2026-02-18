@@ -1,0 +1,16 @@
+command:
+  - "streamlit"
+  - "run"
+  - "streamlit_app.py"
+  - "--server.port"
+  - "8000"
+  - "--server.address"
+  - "0.0.0.0"
+
+env:
+  - name: USE_MOCK_BACKEND
+    value: "false"
+  - name: LAKEBASE_INSTANCE_NAME
+    value: "shift-scheduler-instance"
+  - name: LAKEBASE_DATABASE_NAME
+    value: "shift_scheduler"

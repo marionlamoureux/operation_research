@@ -15,7 +15,7 @@ import uuid
 from contextlib import contextmanager
 from typing import Optional
 
-from sqlalchemy import URL, create_engine, event
+from sqlalchemy import URL, create_engine, event, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -76,12 +76,30 @@ def _generate_lakebase_token(instance_name: str) -> Optional[str]:
     if not client:
         return None
     try:
-        cred = client.database.generate_database_credential(
-            request_id=str(uuid.uuid4()),
-            instance_names=[instance_name],
+        # Try the SDK method first (requires newer databricks-sdk)
+        if hasattr(client, "database"):
+            cred = client.database.generate_database_credential(
+                request_id=str(uuid.uuid4()),
+                instance_names=[instance_name],
+            )
+            logger.info(f"Generated Lakebase token for: {instance_name}")
+            return cred.token
+
+        # Fallback: raw REST API call for older SDK versions
+        import requests
+        host = client.config.host.rstrip("/")
+        token = client.config.authenticate()
+        headers = {**token, "Content-Type": "application/json"}
+        resp = requests.post(
+            f"{host}/api/2.0/database/credentials",
+            headers=headers,
+            json={"request_id": str(uuid.uuid4()), "instance_names": [instance_name]},
+            timeout=30,
         )
-        logger.info(f"Generated Lakebase token for: {instance_name}")
-        return cred.token
+        resp.raise_for_status()
+        result = resp.json()
+        logger.info(f"Generated Lakebase token (REST) for: {instance_name}")
+        return result.get("token")
     except Exception as e:
         logger.error(f"Failed to generate Lakebase token: {e}")
         return None
@@ -108,6 +126,29 @@ def start_token_refresh():
         _token_refresh_thread = threading.Thread(target=_token_refresh_loop, daemon=True)
         _token_refresh_thread.start()
         logger.info("Started Lakebase token refresh thread")
+
+
+def _get_instance_host(client, instance_name: str) -> str:
+    """Get the read-write DNS for a Lakebase instance."""
+    try:
+        if hasattr(client, "database"):
+            instance = client.database.get_database_instance(name=instance_name)
+            return instance.read_write_dns
+
+        # Fallback: raw REST API
+        import requests
+        host = client.config.host.rstrip("/")
+        token = client.config.authenticate()
+        headers = {**token}
+        resp = requests.get(
+            f"{host}/api/2.0/database/instances/{instance_name}",
+            headers=headers,
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json()["read_write_dns"]
+    except Exception as e:
+        raise ValueError(f"Failed to get Lakebase instance info for {instance_name}: {e}")
 
 
 def is_postgres_configured() -> bool:
@@ -139,8 +180,7 @@ def init_database(database_url: Optional[str] = None) -> Engine:
         if not client:
             raise ValueError("Could not create Databricks WorkspaceClient")
 
-        instance = client.database.get_database_instance(name=instance_name)
-        host = instance.read_write_dns
+        host = _get_instance_host(client, instance_name)
 
         _current_token = _generate_lakebase_token(instance_name)
         if not _current_token:
@@ -195,12 +235,19 @@ def get_engine() -> Engine:
 
 
 @contextmanager
-def session_scope():
-    """Synchronous session context manager."""
+def session_scope(user_email: Optional[str] = None):
+    """Synchronous session context manager.
+
+    If user_email is provided, sets the app.caller_email session variable
+    so that PostgreSQL Row-Level Security policies can filter rows per user.
+    """
     if _session_maker is None:
         init_database()
     session = _session_maker()
     try:
+        if user_email:
+            safe_email = user_email.replace("'", "''")
+            session.execute(text(f"SET app.caller_email = '{safe_email}'"))
         yield session
         session.commit()
     except Exception:

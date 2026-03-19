@@ -2,9 +2,12 @@
 
 import streamlit as st
 from models import AvailabilitySchema, DAY_NAMES, EmployeeSchema
+from style import apply_style
 
 st.set_page_config(page_title="Employees", page_icon="\U0001f465", layout="wide")
-st.title("\U0001f465 Employee Management")
+apply_style()
+
+st.title("Employee Management")
 
 backend = st.session_state.get("backend")
 if not backend:
@@ -49,10 +52,10 @@ for emp in employees:
             new_name = st.text_input("Name", value=emp.name, key=f"name_{emp.id}")
             new_email = st.text_input("Email", value=emp.email or "", key=f"email_{emp.id}")
             new_max_hours = st.number_input(
-                "Max hours/week", value=emp.max_hours_per_week, min_value=1, max_value=80, key=f"hours_{emp.id}"
+                "Max hours per week", value=emp.max_hours_per_week, min_value=1, max_value=80, key=f"hours_{emp.id}"
             )
             new_max_shifts = st.number_input(
-                "Max shifts/day", value=emp.max_shifts_per_day, min_value=1, max_value=3, key=f"mshifts_{emp.id}"
+                "Max shifts per day", value=emp.max_shifts_per_day, min_value=1, max_value=3, key=f"mshifts_{emp.id}"
             )
             emp_skill_names = [skill_map[sid] for sid in emp.skill_ids if sid in skill_map]
             new_skill_names = st.multiselect(
@@ -107,8 +110,8 @@ st.subheader("Add New Employee")
 with st.form("add_employee_form"):
     name = st.text_input("Name")
     email = st.text_input("Email (optional)")
-    max_hours = st.number_input("Max hours/week", value=40, min_value=1, max_value=80)
-    max_shifts = st.number_input("Max shifts/day", value=1, min_value=1, max_value=3)
+    max_hours = st.number_input("Max hours per week", value=40, min_value=1, max_value=80)
+    max_shifts = st.number_input("Max shifts per day", value=1, min_value=1, max_value=3)
     emp_skills = st.multiselect("Skills", options=skill_names)
     avail_checkboxes = st.multiselect("Available days", options=DAY_NAMES, default=DAY_NAMES[:5])
 

@@ -1,0 +1,25 @@
+resources:
+  jobs:
+    solver_worker:
+      name: solver-worker-${bundle.target}
+      description: "Background worker that claims solver tasks from the Lakebase queue and runs OR-Tools CP-SAT."
+      tasks:
+        - task_key: solver_loop
+          notebook_task:
+            notebook_path: ../src/worker/solver_worker_notebook.py
+            source: WORKSPACE
+          environment_key: solver_env
+          timeout_seconds: 3600
+      environments:
+        - environment_key: solver_env
+          spec:
+            client: "1"
+            dependencies:
+              - numpy<2
+              - ortools>=9.10
+              - sqlalchemy>=2.0
+              - psycopg[binary]>=3.1
+              - pydantic>=2.0
+              - databricks-sdk
+              - requests
+      max_concurrent_runs: 3

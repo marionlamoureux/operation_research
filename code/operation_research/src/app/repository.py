@@ -1,5 +1,6 @@
 """CRUD operations against Lakebase PostgreSQL using SQLAlchemy."""
 
+import json
 import uuid
 from datetime import time
 
@@ -62,7 +63,9 @@ def list_employees(session: Session) -> list[EmployeeSchema]:
             name=e.name,
             email=e.email,
             max_hours_per_week=e.max_hours_per_week,
+            min_hours_per_week=e.min_hours_per_week,
             max_shifts_per_day=e.max_shifts_per_day,
+            max_consecutive_days=e.max_consecutive_days,
             is_active=e.is_active,
             skill_ids=[str(s.id) for s in e.skills],
             availabilities=[
@@ -73,6 +76,9 @@ def list_employees(session: Session) -> list[EmployeeSchema]:
                 )
                 for a in e.availabilities
             ],
+            holiday_days=json.loads(e.holiday_days_json) if e.holiday_days_json else [],
+            preferred_shift_ids=json.loads(e.preferred_shift_ids_json) if e.preferred_shift_ids_json else [],
+            avoid_shift_ids=json.loads(e.avoid_shift_ids_json) if e.avoid_shift_ids_json else [],
         ))
     return result
 
@@ -82,7 +88,12 @@ def create_employee(session: Session, data: EmployeeSchema) -> EmployeeSchema:
         name=data.name,
         email=data.email,
         max_hours_per_week=data.max_hours_per_week,
+        min_hours_per_week=data.min_hours_per_week,
         max_shifts_per_day=data.max_shifts_per_day,
+        max_consecutive_days=data.max_consecutive_days,
+        holiday_days_json=json.dumps(data.holiday_days) if data.holiday_days else None,
+        preferred_shift_ids_json=json.dumps(data.preferred_shift_ids) if data.preferred_shift_ids else None,
+        avoid_shift_ids_json=json.dumps(data.avoid_shift_ids) if data.avoid_shift_ids else None,
     )
     if data.skill_ids:
         skills = session.query(Skill).filter(Skill.id.in_([uuid.UUID(s) for s in data.skill_ids])).all()
@@ -113,7 +124,12 @@ def update_employee(session: Session, employee_id: str, data: EmployeeSchema) ->
     emp.name = data.name
     emp.email = data.email
     emp.max_hours_per_week = data.max_hours_per_week
+    emp.min_hours_per_week = data.min_hours_per_week
     emp.max_shifts_per_day = data.max_shifts_per_day
+    emp.max_consecutive_days = data.max_consecutive_days
+    emp.holiday_days_json = json.dumps(data.holiday_days) if data.holiday_days else None
+    emp.preferred_shift_ids_json = json.dumps(data.preferred_shift_ids) if data.preferred_shift_ids else None
+    emp.avoid_shift_ids_json = json.dumps(data.avoid_shift_ids) if data.avoid_shift_ids else None
 
     if data.skill_ids:
         skills = session.query(Skill).filter(Skill.id.in_([uuid.UUID(s) for s in data.skill_ids])).all()
@@ -161,6 +177,7 @@ def list_shifts(session: Session) -> list[ShiftSchema]:
             min_staff=s.min_staff,
             max_staff=s.max_staff,
             required_skill_ids=[str(sk.id) for sk in s.required_skills],
+            is_priority=s.is_priority,
         )
         for s in rows
     ]
@@ -174,6 +191,7 @@ def create_shift(session: Session, data: ShiftSchema) -> ShiftSchema:
         end_time=_parse_time(data.end_time),
         min_staff=data.min_staff,
         max_staff=data.max_staff,
+        is_priority=data.is_priority,
     )
     if data.required_skill_ids:
         skills = session.query(Skill).filter(Skill.id.in_([uuid.UUID(s) for s in data.required_skill_ids])).all()

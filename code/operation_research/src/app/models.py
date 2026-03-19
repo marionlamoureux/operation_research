@@ -72,8 +72,13 @@ class Employee(Base):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     max_hours_per_week: Mapped[int] = mapped_column(Integer, default=40)
+    min_hours_per_week: Mapped[int] = mapped_column(Integer, default=0)
     max_shifts_per_day: Mapped[int] = mapped_column(Integer, default=1)
+    max_consecutive_days: Mapped[int] = mapped_column(Integer, default=5)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    holiday_days_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON list of day indices
+    preferred_shift_ids_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON list
+    avoid_shift_ids_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON list
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     skills = relationship("Skill", secondary=employee_skills, backref="employees")
@@ -100,6 +105,7 @@ class Shift(Base):
     end_time: Mapped[time] = mapped_column(Time, nullable=False)
     min_staff: Mapped[int] = mapped_column(Integer, default=1)
     max_staff: Mapped[int] = mapped_column(Integer, default=5)
+    is_priority: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     required_skills = relationship("Skill", secondary=shift_required_skills)
@@ -130,6 +136,20 @@ class ScheduleAssignment(Base):
     shift = relationship("Shift")
 
 
+class SolveTask(Base):
+    """Queue table for async solver tasks. Workers claim PENDING rows."""
+    __tablename__ = "solve_tasks"
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[str] = mapped_column(String(255), nullable=False)
+    input_json: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDING", index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    output_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
+
 # ---------------------------------------------------------------------------
 # Pydantic schemas
 # ---------------------------------------------------------------------------
@@ -151,10 +171,15 @@ class EmployeeSchema(BaseModel):
     name: str
     email: Optional[str] = None
     max_hours_per_week: int = 40
+    min_hours_per_week: int = 0
     max_shifts_per_day: int = 1
+    max_consecutive_days: int = 5
     is_active: bool = True
     skill_ids: list[str] = Field(default_factory=list)
     availabilities: list[AvailabilitySchema] = Field(default_factory=list)
+    holiday_days: list[int] = Field(default_factory=list)  # day_of_week indices on holiday
+    preferred_shift_ids: list[str] = Field(default_factory=list)  # preferred shifts (soft)
+    avoid_shift_ids: list[str] = Field(default_factory=list)  # shifts to avoid (soft)
 
 
 class ShiftSchema(BaseModel):
@@ -166,6 +191,7 @@ class ShiftSchema(BaseModel):
     min_staff: int = 1
     max_staff: int = 5
     required_skill_ids: list[str] = Field(default_factory=list)
+    is_priority: bool = False  # priority shifts get bonus in objective
 
 
 class ScheduleRunSchema(BaseModel):

@@ -14,3 +14,5 @@ env:
     value: "shift-scheduler-instance"
   - name: LAKEBASE_DATABASE_NAME
     value: "shift_scheduler"
+  - name: SOLVER_WORKER_JOB_ID
+    value: "504862188035333"

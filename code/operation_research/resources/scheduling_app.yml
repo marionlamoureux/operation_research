@@ -4,3 +4,9 @@ resources:
       name: shift-scheduler-${bundle.target}
       description: "Staff/shift scheduling optimizer using Google OR-Tools CP-SAT, backed by Lakebase PostgreSQL."
       source_code_path: ../src/app
+      resources:
+        - name: solver-worker-job
+          description: "Solver worker job to trigger on demand"
+          job:
+            id: ${resources.jobs.solver_worker.id}
+            permission: CAN_MANAGE_RUN

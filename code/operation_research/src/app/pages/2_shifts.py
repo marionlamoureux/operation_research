@@ -3,9 +3,12 @@
 import streamlit as st
 import plotly.graph_objects as go
 from models import DAY_NAMES, ShiftSchema
+from style import apply_style, plotly_layout_defaults, CHART_COLORS
 
 st.set_page_config(page_title="Shifts", page_icon="\U0001f552", layout="wide")
-st.title("\U0001f552 Shift Configuration")
+apply_style()
+
+st.title("Shift Configuration")
 
 backend = st.session_state.get("backend")
 if not backend:
@@ -23,17 +26,13 @@ st.subheader("Weekly Shift Overview")
 if shifts:
     fig = go.Figure()
 
-    colors = [
-        "#636EFA", "#EF553B", "#00CC96", "#AB63FA", "#FFA15A",
-        "#19D3F3", "#FF6692", "#B6E880", "#FF97FF", "#FECB52",
-    ]
     shift_type_colors = {}
     color_idx = 0
 
     for s in shifts:
         base_name = s.name.split(" (")[0] if " (" in s.name else s.name
         if base_name not in shift_type_colors:
-            shift_type_colors[base_name] = colors[color_idx % len(colors)]
+            shift_type_colors[base_name] = CHART_COLORS[color_idx % len(CHART_COLORS)]
             color_idx += 1
 
         start_parts = s.start_time.split(":")
@@ -50,6 +49,7 @@ if shifts:
             marker_color=shift_type_colors[base_name],
             text=f"{s.name}<br>{s.start_time}-{s.end_time}<br>Staff: {s.min_staff}-{s.max_staff}",
             textposition="inside",
+            textfont=dict(family="DM Sans", size=12, color="white"),
             showlegend=False,
             hovertemplate=f"<b>{s.name}</b><br>{s.start_time} - {s.end_time}<br>Staff: {s.min_staff}-{s.max_staff}<extra></extra>",
         ))
@@ -60,6 +60,7 @@ if shifts:
         yaxis=dict(categoryorder="array", categoryarray=list(reversed(DAY_NAMES))),
         height=400,
         margin=dict(l=100, r=20, t=20, b=40),
+        **plotly_layout_defaults(),
     )
     st.plotly_chart(fig, use_container_width=True)
 else:
@@ -83,7 +84,7 @@ for day in range(7):
             req_skills_str = ", ".join(skill_map.get(sid, "?") for sid in s.required_skill_ids)
             c1, c2, c3 = st.columns([3, 2, 1])
             c1.write(f"**{s.name}** | {s.start_time} - {s.end_time}")
-            c2.write(f"Staff: {s.min_staff}-{s.max_staff} | Skills: {req_skills_str or 'any'}")
+            c2.write(f"Staff: {s.min_staff}-{s.max_staff} | Skills: {req_skills_str or 'Any'}")
             if c3.button("Delete", key=f"del_shift_{s.id}"):
                 backend.delete_shift(s.id)
                 st.rerun()

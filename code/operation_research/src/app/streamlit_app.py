@@ -3,8 +3,10 @@
 import streamlit as st
 from backend import get_backend
 from models import DAY_NAMES
+from style import apply_style
 
 st.set_page_config(page_title="Staff Scheduler", page_icon="\U0001f4c5", layout="wide")
+apply_style()
 
 
 @st.cache_resource
@@ -15,7 +17,7 @@ def init_backend():
 backend = init_backend()
 st.session_state.setdefault("backend", backend)
 
-st.title("\U0001f4c5 Staff & Shift Scheduler")
+st.title("Staff & Shift Scheduler")
 st.markdown("Optimize staff scheduling with constraint programming (Google OR-Tools CP-SAT)")
 
 st.divider()
@@ -28,7 +30,7 @@ runs = backend.list_schedule_runs()
 
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Employees", len(employees))
-col2.metric("Shifts / week", len(shifts))
+col2.metric("Shifts per Week", len(shifts))
 col3.metric("Skills", len(skills))
 col4.metric("Schedule Runs", len(runs))
 
@@ -36,7 +38,7 @@ if runs:
     last_run = runs[-1]
     st.subheader("Latest Schedule Run")
     r1, r2, r3 = st.columns(3)
-    r1.metric("Status", last_run.status.upper())
+    r1.metric("Status", last_run.status.capitalize())
     r2.metric("Solver Time", f"{last_run.solver_time_seconds or 0:.1f}s")
     r3.metric("Assignments", len(last_run.assignments))
 

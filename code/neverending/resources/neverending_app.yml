@@ -1,6 +1,0 @@
-resources:
-  apps:
-    neverending_app:
-      name: neverending-forest-${bundle.target}
-      description: "Real-time forest monitoring dashboard — fauna detections, flora identification, hydrometrics alerts, and carbon capture KPIs for a 9-hectare forest in France."
-      source_code_path: ../src/app
